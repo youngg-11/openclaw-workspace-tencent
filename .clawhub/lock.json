@@ -16,6 +16,18 @@
     "social-media-scraper": {
       "version": "1.0.0",
       "installedAt": 1772899755873
+    },
+    "find": {
+      "version": "1.0.0",
+      "installedAt": 1772904258331
+    },
+    "taobao-image-search": {
+      "version": "1.0.2",
+      "installedAt": 1772904484861
+    },
+    "taobao-hot-cn": {
+      "version": "1.0.0",
+      "installedAt": 1772904495918
     }
   }
 }
