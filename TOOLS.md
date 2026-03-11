@@ -1,6 +1,24 @@
 # TOOLS.md - Local Notes
 
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
+## GitHub 备份仓库
+
+| 环境 | 仓库名 | 说明 |
+|------|--------|------|
+| **云端 (腾讯云)** | `openclaw-workspace-tencent` | 公开仓库 |
+| **云端 (腾讯云)** | `openclaw-config-backup-tencent` | 私有仓库 |
+| **本地 (Windows)** | `openclaw-workspace` | 公开仓库 |
+| **本地 (Windows)** | `openclaw-config-backup` | 私有仓库 |
+
+**规律**：带 `tencent` = 云端，不带 = 本地
+
+---
+
+## 备份/恢复时必问
+
+1. **云端还是本地？**
+2. **用哪个仓库？**
+
+---
 
 ## What Goes Here
 
