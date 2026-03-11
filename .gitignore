@@ -1,0 +1,9 @@
+# Sensitive files - don't upload
+*.json
+*.token
+*.key
+*.secret
+credentials/
+.env
+token/
+config.local/

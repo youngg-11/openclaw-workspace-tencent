@@ -60,6 +60,10 @@
     "youtube-transcript": {
       "version": "1.0.1",
       "installedAt": 1773110240593
+    },
+    "agent-browser": {
+      "version": "0.2.0",
+      "installedAt": 1773247351042
     }
   }
 }
