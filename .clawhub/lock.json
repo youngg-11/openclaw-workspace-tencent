@@ -28,6 +28,38 @@
     "taobao-hot-cn": {
       "version": "1.0.0",
       "installedAt": 1772904495918
+    },
+    "openclaw-tavily-search": {
+      "version": "0.1.0",
+      "installedAt": 1772948128770
+    },
+    "email-163-com": {
+      "version": "1.0.3",
+      "installedAt": 1772986567289
+    },
+    "email-daily-summary": {
+      "version": "0.1.0",
+      "installedAt": 1772986641002
+    },
+    "porteden-email": {
+      "version": "1.0.4",
+      "installedAt": 1772986646995
+    },
+    "reddit-readonly": {
+      "version": "1.0.0",
+      "installedAt": 1773109574707
+    },
+    "edison-youtube-full": {
+      "version": "1.0.0",
+      "installedAt": 1773109581468
+    },
+    "youtube-full": {
+      "version": "1.4.1",
+      "installedAt": 1773110202302
+    },
+    "youtube-transcript": {
+      "version": "1.0.1",
+      "installedAt": 1773110240593
     }
   }
 }
