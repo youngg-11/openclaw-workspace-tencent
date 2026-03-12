@@ -162,3 +162,19 @@ python3 ~/.openclaw/skills/self-improving-agent/check_memory.py \
 ---
 
 Created: 2026-03-05 by 老二
+
+---
+
+# self-improvement 教程
+
+## 记录场景
+- 命令/操作失败 → 记录到 .learnings/ERRORS.md
+- 用户纠正 → 记录到 .learnings/LEARNINGS.md (category: correction)
+- 用户想要不存在的能力 → 记录到 .learnings/FEATURE_REQUESTS.md
+- 知识过时 → 记录到 .learnings/LEARNINGS.md (category: knowledge_gap)
+- 发现更好的方法 → 记录到 .learnings/LEARNINGS.md (category: best_practice)
+
+## 提升规则
+- 行为模式 → 提升到 SOUL.md
+- 工作流改进 → 提升到 AGENTS.md
+- 工具问题 → 提升到 TOOLS.md

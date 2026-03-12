@@ -1,6 +1,7 @@
 ---
 name: reddit-readonly
-description: >-
+description: Reddit浏览。触发场景：用户要求浏览 subreddits、搜索帖子、查看评论。
+---
   Browse and search Reddit in read-only mode using public JSON endpoints.
   Use when the user asks to browse subreddits, search for posts by topic,
   inspect comment threads, or build a shortlist of links to review and reply to manually.

@@ -1,6 +1,6 @@
 ---
 name: Find
-description: Locate anything with progressive search expansion, multi-source validation, and iterative refinement until found.
+description: 渐进式搜索。触发场景：用户要求查找文件、内容、信息。
 ---
 
 ## Pattern

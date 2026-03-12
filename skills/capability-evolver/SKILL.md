@@ -1,7 +1,6 @@
 ---
 name: capability-evolver
-description: A self-evolution engine for AI agents. Analyzes runtime history to identify improvements and applies protocol-constrained evolution.
-tags: [meta, ai, self-improvement, core]
+description: AI自我进化引擎。分析运行时历史识别改进并应用协议约束的进化。
 ---
 
 # 🧬 Capability Evolver
