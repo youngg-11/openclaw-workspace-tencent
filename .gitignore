@@ -7,3 +7,4 @@ credentials/
 .env
 token/
 config.local/
+node_modules/
