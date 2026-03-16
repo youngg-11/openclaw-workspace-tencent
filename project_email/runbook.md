@@ -17,3 +17,26 @@
 3. 提取失败（正文编码或正则不匹配）
 4. 推送失败（通道目标/权限）
 
+
+## OTP Watcher（Gmail 首路）
+
+### 初始化
+```bash
+cd /root/.openclaw/workspace/project_email/otp_watcher
+cp .env.example .env
+# 编辑 .env，填入 MAILBOX_1_PASS（Gmail App Password）
+```
+
+### 安装为系统服务
+```bash
+cp /root/.openclaw/workspace/project_email/otp_watcher/otp-watcher.service /etc/systemd/system/otp-watcher.service
+systemctl daemon-reload
+systemctl enable --now otp-watcher
+```
+
+### 运维
+```bash
+systemctl status otp-watcher
+journalctl -u otp-watcher -f
+systemctl restart otp-watcher
+```
