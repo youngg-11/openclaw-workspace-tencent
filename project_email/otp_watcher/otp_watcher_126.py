@@ -31,10 +31,10 @@ EXCLUDE_SUBJECT_PATTERNS = [
     re.compile(r'new notifications?', re.I),
 ]
 
-MAIL_HOST = os.getenv('MAILBOX_1_HOST', 'imap.gmail.com')
-MAIL_PORT = int(os.getenv('MAILBOX_1_PORT', '993'))
-MAIL_USER = os.getenv('MAILBOX_1_USER', '')
-MAIL_PASS = os.getenv('MAILBOX_1_PASS', '')
+MAIL_HOST = os.getenv('MAILBOX_2_HOST', 'imap.gmail.com')
+MAIL_PORT = int(os.getenv('MAILBOX_2_PORT', '993'))
+MAIL_USER = os.getenv('MAILBOX_2_USER', '')
+MAIL_PASS = os.getenv('MAILBOX_2_PASS', '')
 OPENCLAW_BIN = os.getenv('OPENCLAW_BIN', '/root/.local/share/pnpm/openclaw')
 PUSH_CHANNEL = os.getenv('PUSH_CHANNEL', 'feishu')
 PUSH_TARGET = os.getenv('PUSH_TARGET', 'user:ou_6fca8ce759906602dfffae5538baa09f')
@@ -196,7 +196,7 @@ def run_once(conn, state):
 
 def main():
     if not MAIL_USER or not MAIL_PASS:
-        log('MAILBOX_1_USER/MAILBOX_1_PASS missing; exiting')
+        log('MAILBOX_2_USER/MAILBOX_2_PASS missing; exiting')
         return
 
     state = load_state()
@@ -205,7 +205,9 @@ def main():
             ctx = ssl.create_default_context()
             conn = imaplib.IMAP4_SSL(MAIL_HOST, MAIL_PORT, ssl_context=ctx)
             conn.login(MAIL_USER, MAIL_PASS)
-            conn.select("INBOX")
+            log("about to select INBOX")
+            typ, data = conn.select("INBOX")
+            log(f"select result: {typ} {data}")
             log('IMAP login success')
             while True:
                 run_once(conn, state)

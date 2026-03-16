@@ -1,0 +1,16 @@
+[Unit]
+Description=OTP Watcher (Gmail IMAP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/.openclaw/workspace/project_email/otp_watcher
+EnvironmentFile=/root/.openclaw/workspace/project_email/otp_watcher/.env
+ExecStart=/usr/bin/env python3 /root/.openclaw/workspace/project_email/otp_watcher/otp_watcher.py
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
