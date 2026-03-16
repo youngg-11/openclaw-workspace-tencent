@@ -1,0 +1,3 @@
+otp_watcher/.env
+otp_watcher/state.json
+otp_watcher/otp.log

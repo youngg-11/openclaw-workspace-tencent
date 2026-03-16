@@ -5,3 +5,5 @@
 - 建立需求、对话摘要、长期记忆、凭据模板、运维手册。
 - 确认部署方向：云端常驻、不走代理、支持 126/Gmail/Outlook/QQ。
 
+- 部署 otp-watcher systemd 服务并完成 Gmail IMAP 登录连通。
+- 新增 `.gitignore`，防止提交 `.env` 和运行时状态/日志。
