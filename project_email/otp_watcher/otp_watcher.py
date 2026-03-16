@@ -14,10 +14,20 @@ from pathlib import Path
 STATE_FILE = Path('/root/.openclaw/workspace/project_email/otp_watcher/state.json')
 LOG_FILE = Path('/root/.openclaw/workspace/project_email/otp_watcher/otp.log')
 
-OTP_REGEX = re.compile(os.getenv('OTP_REGEX', r'\\b\\d{4,8}\\b'))
-KEYWORDS = [k.strip().lower() for k in os.getenv('OTP_KEYWORDS', 'otp,code,verification,verify,验证码,动态码,校验码,一次性').split(',') if k.strip()]
+# 可调参数
+POLL_SECONDS = int(os.getenv('POLL_SECONDS', '2'))
+OTP_REGEX = re.compile(os.getenv('OTP_REGEX', r'\b\d{4,8}\b'))
+KEYWORDS = [k.strip().lower() for k in os.getenv('OTP_KEYWORDS', 'otp,code,verification,verify,验证码,动态码,校验码,一次性,password,login,signin,security').split(',') if k.strip()]
+
+# 放宽后的“验证码来源”规则：
+# 1) 命中关键词 + 数字；或
+# 2) 发件人域名在白名单（可选）且有数字
+SENDER_DOMAIN_ALLOW = [d.strip().lower() for d in os.getenv('SENDER_DOMAIN_ALLOW', '').split(',') if d.strip()]
+SUBJECT_HINTS = [s.strip().lower() for s in os.getenv('SUBJECT_HINTS', 'verification,验证码,code,security,login').split(',') if s.strip()]
+
 EXCLUDE_SUBJECT_PATTERNS = [
     re.compile(r'你有\d+\s*条新通知'),
+    re.compile(r'你收到以下内容：\d+\s*条新通知'),
     re.compile(r'new notifications?', re.I),
 ]
 
@@ -41,11 +51,14 @@ def log(msg: str):
 
 def load_state():
     if not STATE_FILE.exists():
-        return {'seen': []}
+        return {'seen': [], 'last_uid': 0}
     try:
-        return json.loads(STATE_FILE.read_text(encoding='utf-8'))
+        d = json.loads(STATE_FILE.read_text(encoding='utf-8'))
+        d.setdefault('seen', [])
+        d.setdefault('last_uid', 0)
+        return d
     except Exception:
-        return {'seen': []}
+        return {'seen': [], 'last_uid': 0}
 
 
 def save_state(state):
@@ -73,24 +86,36 @@ def should_skip_subject(subject: str) -> bool:
     return any(p.search(subject) for p in EXCLUDE_SUBJECT_PATTERNS)
 
 
-def extract_otp(subject, body):
+def sender_domain(sender: str) -> str:
+    s = sender.lower()
+    if '@' not in s:
+        return ''
+    return s.split('@')[-1].strip('> "')
+
+
+def extract_otp(subject, body, sender):
     if should_skip_subject(subject):
         return None
 
     txt = f"{subject}\n{body}"
     lower = txt.lower()
+    subj_lower = subject.lower()
 
-    # 必须出现关键词，避免普通通知数字误判
-    if KEYWORDS and not any(k in lower for k in KEYWORDS):
+    matches = list(OTP_REGEX.finditer(txt))
+    if not matches:
         return None
 
-    # 仅在关键词附近寻找数字串
-    for m in OTP_REGEX.finditer(txt):
-        start, end = m.span()
-        win = txt[max(0, start - 60): min(len(txt), end + 60)].lower()
-        if any(k in win for k in KEYWORDS):
-            return m.group(0)
-    return None
+    kw_hit = any(k in lower for k in KEYWORDS)
+    subj_hint_hit = any(h in subj_lower for h in SUBJECT_HINTS)
+    domain = sender_domain(sender)
+    sender_hit = bool(SENDER_DOMAIN_ALLOW and any(domain.endswith(d) for d in SENDER_DOMAIN_ALLOW))
+
+    # 放宽策略：关键词命中 或 主题提示命中 或 发件域命中
+    if not (kw_hit or subj_hint_hit or sender_hit):
+        return None
+
+    # 返回第一个候选验证码
+    return matches[0].group(0)
 
 
 def send_push(text: str):
@@ -111,32 +136,61 @@ def send_push(text: str):
         return False
 
 
-def run_once(conn, state):
+def fetch_uid_range(conn, start_uid: int):
     conn.select('INBOX')
-    typ, data = conn.search(None, 'UNSEEN')
-    if typ != 'OK':
+    criteria = f"UID {start_uid + 1}:*"
+    typ, data = conn.uid('search', None, criteria)
+    if typ != 'OK' or not data or not data[0]:
+        return []
+    return [int(x) for x in data[0].split() if x.isdigit()]
+
+
+def bootstrap_last_uid(conn, state):
+    conn.select('INBOX')
+    typ, data = conn.uid('search', None, 'UID 1:*')
+    if typ == 'OK' and data and data[0]:
+        uids = [int(x) for x in data[0].split() if x.isdigit()]
+        if uids:
+            state['last_uid'] = max(uids)
+            save_state(state)
+            log(f"bootstrap last_uid={state['last_uid']} (skip history)")
+
+
+def run_once(conn, state):
+    if state.get('last_uid', 0) <= 0:
+        bootstrap_last_uid(conn, state)
         return
-    for num in data[0].split():
-        typ, msg_data = conn.fetch(num, '(RFC822)')
+
+    uids = fetch_uid_range(conn, state['last_uid'])
+    if not uids:
+        return
+
+    for uid in uids:
+        typ, msg_data = conn.uid('fetch', str(uid), '(RFC822)')
         if typ != 'OK' or not msg_data or not msg_data[0]:
             continue
         raw = msg_data[0][1]
         h = hashlib.sha256(raw).hexdigest()
         if h in state['seen']:
+            state['last_uid'] = max(state['last_uid'], uid)
             continue
+
         msg = email.message_from_bytes(raw)
         subject = str(email.header.make_header(email.header.decode_header(msg.get('Subject', ''))))
         sender = msg.get('From', '')
         body = text_from_message(msg)
-        otp = extract_otp(subject, body)
+
+        otp = extract_otp(subject, body, sender)
         if otp:
             text = f"🔐 验证码提醒\n邮箱: {MAIL_USER}\n发件人: {sender}\n主题: {subject}\n验证码: {otp}\n时间(UTC): {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
             ok = send_push(text)
-            log(f"OTP found and pushed={'ok' if ok else 'fail'} subject={subject[:80]}")
+            log(f"OTP found and pushed={'ok' if ok else 'fail'} uid={uid} subject={subject[:80]}")
         else:
-            log(f"No OTP subject={subject[:80]}")
+            log(f"No OTP uid={uid} subject={subject[:80]}")
+
         state['seen'].append(h)
-        state['seen'] = state['seen'][-500:]
+        state['seen'] = state['seen'][-1000:]
+        state['last_uid'] = max(state['last_uid'], uid)
         save_state(state)
 
 
@@ -144,6 +198,7 @@ def main():
     if not MAIL_USER or not MAIL_PASS:
         log('MAILBOX_1_USER/MAILBOX_1_PASS missing; exiting')
         return
+
     state = load_state()
     while True:
         try:
@@ -153,10 +208,10 @@ def main():
             log('IMAP login success')
             while True:
                 run_once(conn, state)
-                time.sleep(10)
+                time.sleep(POLL_SECONDS)
         except Exception as e:
             log(f'loop error: {e}')
-            time.sleep(15)
+            time.sleep(10)
 
 
 if __name__ == '__main__':
