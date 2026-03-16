@@ -100,7 +100,7 @@ def send_push(text: str):
             capture_output=True,
             text=True,
             timeout=20,
-            env={**os.environ, 'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
+            env={**os.environ, 'PATH': '/root/.nvm/versions/node/v22.22.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
         )
         if proc.returncode != 0:
             log(f"push failed rc={proc.returncode} stderr={proc.stderr.strip()[:200]}")
