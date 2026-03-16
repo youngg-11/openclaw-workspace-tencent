@@ -7,6 +7,7 @@ import ssl
 import time
 import json
 import hashlib
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -14,14 +15,19 @@ STATE_FILE = Path('/root/.openclaw/workspace/project_email/otp_watcher/state.jso
 LOG_FILE = Path('/root/.openclaw/workspace/project_email/otp_watcher/otp.log')
 
 OTP_REGEX = re.compile(os.getenv('OTP_REGEX', r'\\b\\d{4,8}\\b'))
-KEYWORDS = [k.strip().lower() for k in os.getenv('OTP_KEYWORDS', 'code,verification,验证码,动态码,校验码,one-time,password').split(',') if k.strip()]
+KEYWORDS = [k.strip().lower() for k in os.getenv('OTP_KEYWORDS', 'otp,code,verification,verify,验证码,动态码,校验码,一次性').split(',') if k.strip()]
+EXCLUDE_SUBJECT_PATTERNS = [
+    re.compile(r'你有\d+\s*条新通知'),
+    re.compile(r'new notifications?', re.I),
+]
 
 MAIL_HOST = os.getenv('MAILBOX_1_HOST', 'imap.gmail.com')
 MAIL_PORT = int(os.getenv('MAILBOX_1_PORT', '993'))
 MAIL_USER = os.getenv('MAILBOX_1_USER', '')
 MAIL_PASS = os.getenv('MAILBOX_1_PASS', '')
-
-PUSH_MESSAGE_CMD = os.getenv('PUSH_MESSAGE_CMD', 'openclaw message send --channel feishu --message')
+OPENCLAW_BIN = os.getenv('OPENCLAW_BIN', '/root/.local/share/pnpm/openclaw')
+PUSH_CHANNEL = os.getenv('PUSH_CHANNEL', 'feishu')
+PUSH_TARGET = os.getenv('PUSH_TARGET', 'user:ou_6fca8ce759906602dfffae5538baa09f')
 
 
 def log(msg: str):
@@ -63,21 +69,46 @@ def text_from_message(msg):
     return '\n'.join(parts)
 
 
+def should_skip_subject(subject: str) -> bool:
+    return any(p.search(subject) for p in EXCLUDE_SUBJECT_PATTERNS)
+
+
 def extract_otp(subject, body):
+    if should_skip_subject(subject):
+        return None
+
     txt = f"{subject}\n{body}"
     lower = txt.lower()
+
+    # 必须出现关键词，避免普通通知数字误判
     if KEYWORDS and not any(k in lower for k in KEYWORDS):
         return None
-    m = OTP_REGEX.search(txt)
-    return m.group(0) if m else None
+
+    # 仅在关键词附近寻找数字串
+    for m in OTP_REGEX.finditer(txt):
+        start, end = m.span()
+        win = txt[max(0, start - 60): min(len(txt), end + 60)].lower()
+        if any(k in win for k in KEYWORDS):
+            return m.group(0)
+    return None
 
 
 def send_push(text: str):
-    # simple shell-out to OpenClaw CLI message send
-    escaped = text.replace('"', '\\"')
-    cmd = f'{PUSH_MESSAGE_CMD} "{escaped}"'
-    rc = os.system(cmd)
-    return rc == 0
+    try:
+        proc = subprocess.run(
+            [OPENCLAW_BIN, 'message', 'send', '--channel', PUSH_CHANNEL, '--target', PUSH_TARGET, '--message', text],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            env={**os.environ, 'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
+        )
+        if proc.returncode != 0:
+            log(f"push failed rc={proc.returncode} stderr={proc.stderr.strip()[:200]}")
+            return False
+        return True
+    except Exception as e:
+        log(f"push exception: {e}")
+        return False
 
 
 def run_once(conn, state):
