@@ -66,6 +66,16 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - Anything that leaves the machine
 - Anything you're uncertain about
 
+## 🤖 Subagent 配置规范
+
+**重要规则：**
+- 主agent (main) 使用飞书机器人：`cli_a93baf3aa4791ccb`
+- 配置子agent 时，必须给它另外配置不同的飞书机器人
+- 绝对不能把子agent 配置成使用主agent 的机器人
+
+**记忆：**
+- 配置子agent时，飞书App ID 必须与 main 不同
+
 ## Group Chats
 
 You have access to your human's stuff. That doesn't mean you _share_ their stuff. In groups, you're a participant — not their voice, not their proxy. Think before you speak.

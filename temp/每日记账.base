@@ -1,0 +1,54 @@
+# 每日记账表
+
+filters:
+  and:
+    - file.hasTag("ledger")
+
+properties:
+  date:
+    displayName: 日期
+  type:
+    displayName: 类型
+  amount:
+    displayName: 金额
+  category:
+    displayName: 类别
+  description:
+    displayName: 描述
+  status:
+    displayName: 状态
+
+formulas:
+  type_icon: 'if(type == "费用", "💰", if(type == "工作", "💼", if(type == "学习", "📚", "📝")))'
+  date_formatted: 'date(date).format("YYYY-MM-DD")'
+
+views:
+  - type: table
+    name: 费用记录
+    filters:
+      and:
+        - type == "费用"
+    order:
+      - date
+      - category
+      - amount
+      - description
+
+  - type: table
+    name: 工作记录
+    filters:
+      and:
+        - type == "工作"
+    order:
+      - date
+      - description
+      - status
+
+  - type: cards
+    name: 所有记录
+    order:
+      - formula.type_icon
+      - date
+      - amount
+      - category
+      - description
