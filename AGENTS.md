@@ -45,6 +45,12 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
 
+## Deployment Default
+
+- For OpenClaw operations involving skills, workspace structure, deployment, routing, and troubleshooting, default to the Tencent Cloud instance at root@100.106.74.27 unless the user explicitly switches target.
+- Environment label: cloud-tencent
+- Host label: vm-0-8-opencloudos
+
 ## Safety
 
 - Don't exfiltrate private data. Ever.
