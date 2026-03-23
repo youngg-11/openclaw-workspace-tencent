@@ -310,7 +310,13 @@ When the user message clearly indicates bookkeeping, accounting, record-entry, r
 - `main` should not stop at understanding or summarizing if execution is expected
 - `main` should expect `zzy` to perform the bookkeeping workflow, not just discuss it
 
-### Default Bookkeeping Triggers
+#### Feishu Execution Constraint
+- If bookkeeping requires actual Feishu Base/Bitable writes under the zzy Feishu bot identity, do not rely on internal agent-to-agent delegation from main to complete the write.
+- Internal delegation may lose the original Feishu accountId / authorized bot context.
+- In that case, main may identify and structure the record, but the actual Feishu write should run in the direct zzy channel/session, or main should clearly state that direct zzy execution is required for stable write access.
+- Do not claim a Feishu write succeeded unless the current session actually has the correct Feishu account context and the write completed.
+
+## Default Bookkeeping Triggers
 Treat the following as strong routing signals for `zzy`:
 - 帮我记账
 - 记一下
